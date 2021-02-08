@@ -35,7 +35,7 @@
 #define GPU_AWARE_UNKNOWN static int have_gpu_aware = -1;
 
 // TODO HIP: implement HIP-aware MPI support (UCX) detection
-#if defined(KOKKOS_ENABLE_HIP)
+#if defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_OPENMPTARGET)
 GPU_AWARE_UNKNOWN
 #elif defined(KOKKOS_ENABLE_CUDA)
 

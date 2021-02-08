@@ -88,6 +88,7 @@ NPairStyle(half/size/bin/kk/device,
 #ifndef LMP_NPAIR_KOKKOS_H
 #define LMP_NPAIR_KOKKOS_H
 
+
 #include "npair.h"
 #include "neigh_list_kokkos.h"
 
@@ -310,13 +311,13 @@ class NeighborKokkosExecute
   KOKKOS_FUNCTION
   void build_ItemSize(const int &i) const;
 
-#ifdef LMP_KOKKOS_GPU
+#if defined(LMP_KOKKOS_GPU) && !defined(KOKKOS_ENABLE_OPENMPTARGET)
   template<int HalfNeigh, int Newton, int Tri>
-  __device__ inline
+   inline
   void build_ItemCuda(typename Kokkos::TeamPolicy<DeviceType>::member_type dev) const;
 
   template<int HalfNeigh, int Newton, int Tri>
-  __device__ inline
+   inline
   void build_ItemSizeCuda(typename Kokkos::TeamPolicy<DeviceType>::member_type dev) const;
 #endif
 
@@ -387,8 +388,8 @@ struct NPairKokkosBuildFunctor {
   void operator() (const int & i) const {
     c.template build_Item<HALF_NEIGH,GHOST_NEWTON,TRI>(i);
   }
-#ifdef LMP_KOKKOS_GPU
-  __device__ inline
+#if defined(LMP_KOKKOS_GPU) && !defined(KOKKOS_ENABLE_OPENMPTARGET)
+   inline
 
   void operator() (typename Kokkos::TeamPolicy<DeviceType>::member_type dev) const {
     c.template build_ItemCuda<HALF_NEIGH,GHOST_NEWTON,TRI>(dev);
@@ -445,8 +446,8 @@ struct NPairKokkosBuildFunctorSize {
     c.template build_ItemSize<HALF_NEIGH,GHOST_NEWTON,TRI>(i);
   }
 
-#ifdef LMP_KOKKOS_GPU
-  __device__ inline
+#if defined(LMP_KOKKOS_GPU) && !defined(KOKKOS_ENABLE_OPENMPTARGET)
+   inline
   void operator() (typename Kokkos::TeamPolicy<DeviceType>::member_type dev) const {
     c.template build_ItemSizeCuda<HALF_NEIGH,GHOST_NEWTON,TRI>(dev);
   }

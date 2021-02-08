@@ -47,6 +47,15 @@ struct s_double_3 {
     d1 += rhs.d1;
     d2 += rhs.d2;
   }
+
+#if defined(KOKKOS_ENABLE_OPENMPTARGET) || defined(KOKKOS_ENABLE_SYCL)
+private:
+friend KOKKOS_FUNCTION s_double_3 operator+(s_double_3 &dest, s_double_3 const &src)
+  {
+    dest += src;
+    return dest;
+  }
+#endif
 };
 typedef s_double_3 double_3;
 

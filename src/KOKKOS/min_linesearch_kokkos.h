@@ -36,6 +36,21 @@ namespace LAMMPS_NS {
       d0 += rhs.d0;
       d1 += rhs.d1;
     }
+
+    KOKKOS_INLINE_FUNCTION
+    static void join (s_double2 &dest, const s_double2 &src) {
+      dest.d0 += src.d0;
+      dest.d1 += src.d1;
+    }
+
+#if defined(KOKKOS_ENABLE_OPENMPTARGET) || defined(KOKKOS_ENABLE_SYCL)
+private:
+friend KOKKOS_FUNCTION s_double2 operator+(s_double2 &dest, s_double2 const &src)
+  {
+    dest += src;
+    return dest;
+  }
+#endif
   };
   //typedef s_double2 double2;
 

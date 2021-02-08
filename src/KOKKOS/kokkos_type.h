@@ -30,7 +30,7 @@ enum{FULL=1u,HALFTHREAD=2u,HALF=4u};
 #define ISFINITE(x) std::isfinite(x)
 #endif
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_OPENMPTARGET)
 #define LMP_KOKKOS_GPU
 #endif
 
@@ -216,11 +216,20 @@ struct ExecutionSpaceFromDevice<Kokkos::Experimental::HIP> {
 };
 #endif
 
+#if defined(KOKKOS_ENABLE_OPENMPTARGET)
+template<>
+struct ExecutionSpaceFromDevice<Kokkos::Experimental::OpenMPTarget> {
+  static const LAMMPS_NS::ExecutionSpace space = LAMMPS_NS::Device;
+};
+#endif
+
 // set host pinned space
 #if defined(KOKKOS_ENABLE_CUDA)
 typedef Kokkos::CudaHostPinnedSpace LMPPinnedHostType;
 #elif defined(KOKKOS_ENABLE_HIP)
 typedef Kokkos::Experimental::HIPHostPinnedSpace LMPPinnedHostType;
+#elif defined(KOKKOS_ENABLE_OPENMPTARGET)
+typedef Kokkos::DefaultHostExecutionSpace LMPPinnedHostType;
 #endif
 
 // create simple LMPDeviceSpace typedef for non HIP or CUDA specific
@@ -229,6 +238,8 @@ typedef Kokkos::Experimental::HIPHostPinnedSpace LMPPinnedHostType;
 typedef Kokkos::Cuda LMPDeviceSpace;
 #elif defined(KOKKOS_ENABLE_HIP)
 typedef Kokkos::Experimental::HIP LMPDeviceSpace;
+#elif defined(KOKKOS_ENABLE_OPENMPTARGET)
+typedef Kokkos::Experimental::OpenMPTarget LMPDeviceSpace;
 #endif
 
 
@@ -262,6 +273,13 @@ struct AtomicDup<HALFTHREAD,Kokkos::Cuda> {
 #ifdef KOKKOS_ENABLE_HIP
 template<>
 struct AtomicDup<HALFTHREAD,Kokkos::Experimental::HIP> {
+  using value = Kokkos::Experimental::ScatterAtomic;
+};
+#endif
+
+#ifdef KOKKOS_ENABLE_OPENMPTARGET
+template<>
+struct AtomicDup<HALFTHREAD,Kokkos::Experimental::OpenMPTarget> {
   using value = Kokkos::Experimental::ScatterAtomic;
 };
 #endif
@@ -399,6 +417,23 @@ struct s_EV_FLOAT {
     v[4] += rhs.v[4];
     v[5] += rhs.v[5];
   }
+
+#if defined(KOKKOS_ENABLE_OPENMPTARGET)
+private:
+friend KOKKOS_FUNCTION s_EV_FLOAT operator+(s_EV_FLOAT &dest, s_EV_FLOAT const &src)
+  {
+    dest += src;
+    return dest;
+  }
+#endif
+
+  KOKKOS_INLINE_FUNCTION
+  void join(s_EV_FLOAT& dest, const s_EV_FLOAT& src) const { dest += src; }
+
+  KOKKOS_INLINE_FUNCTION
+  void join(volatile s_EV_FLOAT& dest, const volatile s_EV_FLOAT& src) const {
+    dest += src;
+  }
 };
 typedef struct s_EV_FLOAT EV_FLOAT;
 
@@ -505,6 +540,15 @@ struct s_FEV_FLOAT {
     v[4] += rhs.v[4];
     v[5] += rhs.v[5];
   }
+
+#if defined(KOKKOS_ENABLE_OPENMPTARGET) || defined(KOKKOS_ENABLE_SYCL)
+private:
+friend KOKKOS_FUNCTION s_FEV_FLOAT operator+(s_FEV_FLOAT &dest, s_FEV_FLOAT const &src)
+  {
+    dest += src;
+    return dest;
+  }
+#endif
 };
 typedef struct s_FEV_FLOAT FEV_FLOAT;
 

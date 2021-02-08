@@ -53,6 +53,26 @@ namespace LAMMPS_NS {
       t4 += rhs.t4;
       t5 += rhs.t5;
     }
+
+    KOKKOS_INLINE_FUNCTION
+    static void join(s_CTEMP &dest, const s_CTEMP &src)
+    {
+      dest.t0 += src.t0;
+      dest.t1 += src.t1;
+      dest.t2 += src.t2;
+      dest.t3 += src.t3;
+      dest.t4 += src.t4;
+      dest.t5 += src.t5;
+    }
+
+#if defined(KOKKOS_ENABLE_OPENMPTARGET) || defined(KOKKOS_ENABLE_SYCL)
+private:
+friend KOKKOS_FUNCTION s_CTEMP operator+(s_CTEMP &dest, s_CTEMP const &src)
+  {
+    dest += src;
+    return dest;
+  }
+#endif
   };
   typedef s_CTEMP CTEMP;
 
